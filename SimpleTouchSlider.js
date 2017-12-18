@@ -6,7 +6,7 @@
  * @constructor
  */
 var SimpleTouchSlider = function($el, opts){
-  
+
   var $container = $(" > ul", $el);
   var $panes = $(" > ul > li", $el);
 
@@ -178,18 +178,26 @@ var SimpleTouchSlider = function($el, opts){
 /* JQUERY PLUGIN */
 
 (function($) {
-  $.fn.SimpleTouchSlider = function(opts){
+  
+  $.fn.SimpleTouchSlider = function(opts) {
+    
+    var $this = $(this);
+    
     opts = $.extend({
-      el: $(this),
+      el: $this,
       animation_duration: 400,
       auto_play: true,
       play_interval: 5000,
       onPageChange: null
     }, opts);
-    var s = new SimpleTouchSlider($(this), opts);
+    
+    var s = new SimpleTouchSlider($this, opts);
+    
     s.init();
-    $(this).data('sldr', s);
-    $(this).addClass('sldr');
+    $this.data('sldr', s).addClass('sldr');
+    
     return s;
+    
   };
+  
 })(jQuery);
