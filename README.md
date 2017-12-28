@@ -55,10 +55,10 @@ CSS:
 Javascript:
 
 ```js
-//with default settings
+//without options (see SimpleTouchSlider.js for default options)
 var sldr = new SimpleTouchSlider($('.sldr'));
 
-//override some defaults
+//with options
 var sldr = new SimpleTouchSlider($('.sldr'), {
   infinite: false,
   auto_play: false,
@@ -68,5 +68,36 @@ var sldr = new SimpleTouchSlider($('.sldr'), {
 });
 ```
 
-### API
+## API
 
+### getCurrentSlide()
+
+Returns current slide position (integer).
+
+### destroy()
+
+Destroys the instance, stops playing, and frees up memory.
+
+### getNumSides()
+
+Returns the number of slides (integer).
+
+### goToSlide(index)
+
+Animates to the specified slide.
+
+### prev()
+
+Animates to the previous slide.
+
+### next()
+
+Animates to the next slide().
+
+### play()
+
+Starts/resumes playing.
+
+### stop()
+
+Stops playing.
