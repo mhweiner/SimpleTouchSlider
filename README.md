@@ -55,7 +55,7 @@ CSS:
 Javascript:
 
 ```js
-//without options (see SimpleTouchSlider.js for default options)
+//without options
 var sldr = new SimpleTouchSlider($('.sldr'));
 
 //with options
@@ -67,6 +67,14 @@ var sldr = new SimpleTouchSlider($('.sldr'), {
   }
 });
 ```
+
+## Options
+
+* animation_duration (Default: 400) (in milliseconds)
+* auto_play (Default: true)
+* play_interval (Default: 5000) (in milliseconds)
+* onSlideChange (Default: null) Callback.
+* infinite (Default: true)
 
 ## API
 
