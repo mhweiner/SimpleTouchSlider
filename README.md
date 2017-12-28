@@ -3,6 +3,25 @@ Simple touch slider library, powered by HammerJS
 
 ## Usage
 
+HTML:
+
+```HTML
+<div class="sldr">
+  <ul>
+    <li>Slide 1</li>
+    <li>Slide 2</li>
+    <li>Slide 3</li>
+  </ul>
+</div>
+```
+
+```CSS
+.sldr {
+}
+```
+
+Javascript:
+
 ```js
 //with default settings
 var sldr = new SimpleTouchSlider($('.sldr'));
@@ -16,4 +35,6 @@ var sldr = new SimpleTouchSlider($('.sldr'), {
   }
 });
 ```
+
+### API
 
