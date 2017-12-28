@@ -1,5 +1,12 @@
 # SimpleTouchSlider
-A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations. If anyone wants to submit a pull request to convert to a jQuery-free, vanilla JS version, that would be awesome. I just don't have the time right now... PR's welcome!
+A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
+
+## Dependencies
+
+* jQuery 1.6+
+* HammerJS 2.0.0+ (http://hammerjs.github.io/)
+
+If anyone wants to submit a pull request to convert to a jQuery-free, vanilla JS version, that would be awesome. I just don't have the time right now... PR's welcome!
 
 ## Usage
 
