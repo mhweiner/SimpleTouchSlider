@@ -1,5 +1,5 @@
 /**
- * A simple touch slider jQuery plugin, powered by HammerJS.
+ * A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
  * @param $el
  * @param opts
  * @returns {{init: init, getCurrentSlide: getCurrentSlide, destroy: destroy, getNumSlides: getNumSlides, goToSlide: goToSlide, prev: prev, next: next}}
@@ -7,92 +7,101 @@
  */
 var SimpleTouchSlider = function($el, opts){
 
+  console.log($el);
+
   var $container = $el.find(" > ul");
-  var $panes = $container.find(" > li");
+  var $slides = $container.find(" > li");
 
-  var pane_width = 0;
-  var pane_count = $panes.length;
+  var slide_width = 0;
+  var slide_count = $slides.length;
 
-  var current_pane = 0;
+  var current_slide = 0;
 
   var play_interval_obj;
   var is_animating = false;
 
   var mc; //hammer instance
 
+  //set default opts
+  opts = $.extend({
+    animation_duration: 400,
+    auto_play: true,
+    play_interval: 5000,
+    onSlideChange: null,
+    infinite: true
+  }, opts || {});
 
-  /**
-   * initial
-   */
-  function init() {
+  //add class namespace
+  $el.addClass('sldr');
 
-    //set width of container
-    $container.css('width', (pane_count * 100) + '%');
+  //set width of container/drawer
+  $container.css('width', (slide_count * 100) + '%');
 
-    $panes.css('width', (100 / pane_count) + '%');
+  //set width of slide
+  $slides.css('width', (100 / slide_count) + '%');
 
-    setTimeout(function() {
+  //initialize hammer events
+  setTimeout(function() {
 
-      mc = new Hammer($el);
+    mc = new Hammer($el[0]);
 
-      mc.on('pancancel panend', onrelease);
-      mc.on('panleft panright', onpan);
-      mc.on('swipeleft', onswipeleft);
-      mc.on('swiperight', onswiperight);
+    mc.on('pancancel panend', _onrelease);
+    mc.on('panleft panright', onpan);
+    mc.on('swipeleft', _onswipeleft);
+    mc.on('swiperight', _onswiperight);
 
-      //on page change is called on init
-      if (typeof opts.onPageChange === 'function') {
+    //on page change is called on init
+    if (typeof opts.onSlideChange === 'function') {
 
-        opts.onPageChange(0);
+      opts.onSlideChange(0);
 
-      }
+    }
 
-      //auto play
-      if (opts.auto_play) {
+    //auto play
+    if (opts.auto_play) {
 
-        play();
+      play();
 
-      }
+    }
 
-    }, 500);
-  }
+  }, 500);
 
   function onpan(ev) {
 
     stop();
 
-    if (!pane_width) {
+    if (!slide_width) {
 
-      pane_width = $panes.first().width();
+      slide_width = $slides.first().width();
 
     }
 
     // stick to the finger
-    var pane_offset = -(100/pane_count) * current_pane;
-    var drag_offset = ((100/pane_width) * ev.deltaX) / pane_count;
+    var slide_offeset = -(100/slide_count) * current_slide;
+    var drag_offset = ((100/slide_width) * ev.deltaX) / slide_count;
 
-    // slow down at the first and last pane
-    if ((current_pane === 0 && ev.direction === "right") ||
-      (current_pane === pane_count-1 && ev.direction === "left")) {
+    // slow down at the first and last slide
+    if ((current_slide === 0 && ev.direction === "right") ||
+      (current_slide === slide_count-1 && ev.direction === "left")) {
 
       drag_offset *= .4;
 
     }
 
-    setContainerOffset(drag_offset + pane_offset);
+    _setContainerOffset(drag_offset + slide_offeset);
 
   }
 
-  function onrelease(ev) {
+  function _onrelease(ev) {
 
-    if (!pane_width) {
+    if (!slide_width) {
 
-      pane_width = $panes.first().width();
+      slide_width = $slides.first().width();
 
     }
 
     // more then 50% moved, navigate
-    if (Math.abs(ev.deltaX) > pane_width / 2) {
+    if (Math.abs(ev.deltaX) > slide_width / 2) {
 
       if(ev.direction === 'right') {
 
@@ -106,20 +115,20 @@ var SimpleTouchSlider = function($el, opts){
 
     } else {
 
-      showPane(current_pane, true);
+      _showSlide(current_slide, true);
 
     }
 
   }
 
-  function onswipeleft() {
+  function _onswipeleft() {
 
     stop();
     next();
 
   }
 
-  function onswiperight() {
+  function _onswiperight() {
 
     stop();
     prev();
@@ -127,21 +136,21 @@ var SimpleTouchSlider = function($el, opts){
   }
 
   /**
-   * show pane by index
+   * show slide by index
    */
-  function showPane(index, animate) {
+  function _showSlide(index, animate) {
 
     // between the bounds
-    index = Math.max(0, Math.min(index, pane_count-1));
-    current_pane = index;
+    index = Math.max(0, Math.min(index, slide_count-1));
+    current_slide = index;
 
-    var offset = -((100/pane_count)*current_pane);
+    var offset = -((100/slide_count)*current_slide);
 
-    setContainerOffset(offset, animate);
+    _setContainerOffset(offset, animate);
 
-    if (opts.onPageChange) {
+    if (opts.onSlideChange) {
 
-      opts.onPageChange(index);
+      opts.onSlideChange(index);
 
     }
 
@@ -151,7 +160,7 @@ var SimpleTouchSlider = function($el, opts){
    * @param percent
    * @param animate
    */
-  function setContainerOffset(percent, animate) {
+  function _setContainerOffset(percent, animate) {
 
     if (animate && is_animating) {
 
@@ -176,38 +185,47 @@ var SimpleTouchSlider = function($el, opts){
     }
   }
 
-  /**
-   * @param infinite
-   */
-  function next(infinite) {
+  function next() {
 
-    if (current_pane === pane_count - 1 && infinite) {
+    stop();
 
-      current_pane = -1
+    if (current_slide === slide_count - 1 && opts.infinite) {
+
+      current_slide = -1
 
     }
 
-    return showPane(current_pane+1, true);
+    return _showSlide(current_slide+1, true);
 
   }
 
-  /**
-   * @param infinite
-   */
-  function prev(infinite) {
+  function prev() {
 
-    if (current_pane === 0 && infinite) {
+    stop();
 
-      current_pane = pane_count
+    if (current_slide === 0 && opts.infinite) {
+
+      current_slide = slide_count
 
     }
 
-    return showPane(current_pane-1, true);
+    return _showSlide(current_slide - 1, true);
   }
 
   function play() {
 
-    play_interval_obj = setInterval(next, opts.play_interval);
+    stop();
+    play_interval_obj = setInterval(function(){
+
+      if (current_slide === slide_count - 1 && opts.infinite) {
+
+        current_slide = -1
+
+      }
+
+      _showSlide(current_slide + 1, true);
+
+    }, opts.play_interval);
 
   }
 
@@ -222,7 +240,8 @@ var SimpleTouchSlider = function($el, opts){
    */
   function goToSlide(index) {
 
-    showPane(index, true);
+    stop();
+    _showSlide(index, true);
 
   }
 
@@ -231,46 +250,19 @@ var SimpleTouchSlider = function($el, opts){
    */
   function destroy() {
 
+    stop();
     mc.destroy();
-    clearInterval(play_interval_obj);
 
   }
 
   return {
-    init: init,
-    getCurrentSlide: function(){ return current_pane; },
+    getCurrentSlide: function(){ return current_slide; },
     destroy: destroy,
-    getNumSlides: function(){ return pane_count; },
+    getNumSlides: function(){ return slide_count; },
     goToSlide: goToSlide,
     prev: prev,
-    next: next
+    next: next,
+    play: play,
+    stop: stop
   };
 };
-
-
-/* JQUERY PLUGIN */
-
-(function($) {
-
-  $.fn.SimpleTouchSlider = function(opts) {
-
-    var $this = $(this);
-
-    opts = $.extend({
-      el: $this,
-      animation_duration: 400,
-      auto_play: true,
-      play_interval: 5000,
-      onPageChange: null
-    }, opts);
-
-    var s = new SimpleTouchSlider($this, opts);
-
-    s.init();
-    $this.data('sldr', s).addClass('sldr');
-
-    return s;
-
-  };
-
-})(jQuery);
