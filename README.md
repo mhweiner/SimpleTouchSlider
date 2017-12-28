@@ -12,7 +12,7 @@ var sldr = new SimpleTouchSlider($('.sldr'), {
   infinite: false,
   auto_play: false,
   onSlideChange: function(index) {
-    console.log('Slide (index + 1) + ' is showing!');
+    console.log('Slide ' + (index + 1) + ' is showing!');
   }
 });
 ```
