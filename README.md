@@ -16,3 +16,4 @@ var sldr = new SimpleTouchSlider($('.sldr'), {
   }
 });
 ```
+
