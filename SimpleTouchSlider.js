@@ -1,5 +1,7 @@
 /**
  * A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
+ * Written by Marc H. Weiner (http://mhweiner.com)
+ * https://github.com/mhweiner/SimpleTouchSlider
  * @param $el
  * @param opts
  * @returns {{init: init, getCurrentSlide: getCurrentSlide, destroy: destroy, getNumSlides: getNumSlides, goToSlide: goToSlide, prev: prev, next: next}}
