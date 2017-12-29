@@ -41,16 +41,16 @@ CSS:
       margin: 0;
       padding: 0;
       li {
-        display: inline-block;
+        display: block;
         -webkit-transform-style: preserve-3d;
         -webkit-transform: translate3d(0,0,0);
         width: 100%;
+        box-sizing: border-box;
+        position: absolute;
         padding: 0;
-        position: relative;
-        text-align: center; //this and the next few lines are for example. you don't need them.
-        color: white;
-        font-size: 200px;
-        line-height: 100%;
+        margin: 0;
+        top: 0;
+        left: 0;
       }
       &.animate{
         transition: all .5s;
