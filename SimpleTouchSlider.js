@@ -1,7 +1,5 @@
 /**
- * A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
- * Written by Marc H. Weiner (http://mhweiner.com)
- * https://github.com/mhweiner/SimpleTouchSlider
+ * A simple, performant, and lightweight touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
  * @param $el
  * @param opts
  * @returns {{init: init, getCurrentSlide: getCurrentSlide, destroy: destroy, getNumSlides: getNumSlides, goToSlide: goToSlide, prev: prev, next: next}}
@@ -9,12 +7,10 @@
  */
 var SimpleTouchSlider = function($el, opts){
 
-  console.log($el);
-
   var $container = $el.find(" > ul");
   var $slides = $container.find(" > li");
 
-  var slide_width = 0;
+  var slide_width = $slides.first().width();
   var slide_count = $slides.length;
 
   var current_slide = 0;
@@ -27,7 +23,7 @@ var SimpleTouchSlider = function($el, opts){
   //set default opts
   opts = $.extend({
     animation_duration: 400,
-    auto_play: true,
+    auto_play: false,
     play_interval: 5000,
     onSlideChange: null,
     infinite: true
@@ -36,14 +32,34 @@ var SimpleTouchSlider = function($el, opts){
   //add class namespace
   $el.addClass('sldr');
 
-  //set width of container/drawer
-  $container.css('width', (slide_count * 100) + '%');
+  //set width and height of container/drawer
+  $container.css({
+    width: (slide_count * 100) + '%',
+    height: $slides.first().height()
+  });
 
   //set width of slide
   $slides.css('width', (100 / slide_count) + '%');
 
+  //set positioning of elements so we can display:none them for performance without them
+  //shifting around.
+  $slides.each(function(index){
+
+    var $slide = $(this);
+
+    $slide.css('left', (index * slide_width) + 'px');
+
+  });
+
   //initialize hammer events
   setTimeout(function() {
+
+    //hide slides for performance, but wait so images can start pre-loading
+    setTimeout(function() {
+
+      _setDisplayForPerformance(current_slide);
+
+    }, 500);
 
     mc = new Hammer($el[0]);
 
@@ -68,15 +84,13 @@ var SimpleTouchSlider = function($el, opts){
 
   }, 500);
 
+  //on window resize, reposition things
+  $(window).on('resize.sldr', reposition);
+
+
   function onpan(ev) {
 
     stop();
-
-    if (!slide_width) {
-
-      slide_width = $slides.first().width();
-
-    }
 
     // stick to the finger
     var slide_offeset = -(100/slide_count) * current_slide;
@@ -95,12 +109,6 @@ var SimpleTouchSlider = function($el, opts){
   }
 
   function _onrelease(ev) {
-
-    if (!slide_width) {
-
-      slide_width = $slides.first().width();
-
-    }
 
     // more then 50% moved, navigate
     if (Math.abs(ev.deltaX) > slide_width / 2) {
@@ -141,6 +149,8 @@ var SimpleTouchSlider = function($el, opts){
    * show slide by index
    */
   function _showSlide(index, animate) {
+
+    _setDisplayForPerformance(index);
 
     // between the bounds
     index = Math.max(0, Math.min(index, slide_count-1));
@@ -187,6 +197,22 @@ var SimpleTouchSlider = function($el, opts){
     }
   }
 
+  function _setDisplayForPerformance(index) {
+
+    //at any given time, only the current, previous, and next slides should have display:
+    // inline-block. the rest should be none.
+
+    var $current = $slides.eq(index);
+    var $next = $slides.eq(index + 1);
+    var $prev = $slides.eq(index - 1);
+
+    $slides.css('display', 'none');
+    $prev.css('display', 'inline-block');
+    $current.css('display', 'inline-block');
+    $next.css('display', 'inline-block');
+
+  }
+
   function next() {
 
     stop();
@@ -197,7 +223,7 @@ var SimpleTouchSlider = function($el, opts){
 
     }
 
-    return _showSlide(current_slide+1, true);
+    return _showSlide(current_slide + 1, true);
 
   }
 
@@ -247,6 +273,27 @@ var SimpleTouchSlider = function($el, opts){
 
   }
 
+  function reposition(){
+
+    //get new slide width
+    slide_width = $slides.first().width();
+
+    //resize container
+    $container.css({
+      height: $slides.first().height()
+    });
+
+    //reposition slides
+    $slides.each(function(index){
+
+      var $slide = $(this);
+
+      $slide.css('left', (index * slide_width) + 'px');
+
+    });
+
+  }
+
   /**
    * Tear down function to kill intervals and unbind listeners.
    */
@@ -254,6 +301,7 @@ var SimpleTouchSlider = function($el, opts){
 
     stop();
     mc.destroy();
+    $(window).off('resize.sldr');
 
   }
 
@@ -265,6 +313,7 @@ var SimpleTouchSlider = function($el, opts){
     prev: prev,
     next: next,
     play: play,
-    stop: stop
+    stop: stop,
+    reposition: reposition
   };
 };
