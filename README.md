@@ -1,5 +1,5 @@
 # SimpleTouchSlider
-A simple touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
+A simple, performant, and lightweight touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
 
 ## Dependencies
 
@@ -116,3 +116,7 @@ Starts/resumes playing.
 ### stop()
 
 Stops playing.
+
+### reposition()
+
+Manually recalculate and apply positioning. You may need to use this should you resize the container without a window.resize event being fired.
