@@ -1,5 +1,5 @@
 # SimpleTouchSlider
-A simple, performant, and lightweight touch slider powered by HammerJS, jQuery, and CSS3 hardware animations.
+A simple, performant, and lightweight touch slider powered by HammerJS, jQuery, and CSS3 hardware animations. The slider will apply `display: none` to slides that are not currently within view, which greatly improves performance, especially when dealing with high resolution images.
 
 ## Dependencies
 
