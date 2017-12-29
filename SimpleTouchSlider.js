@@ -69,7 +69,6 @@ var SimpleTouchSlider = function($el, opts){
     mc.on('swiperight', _onswiperight);
     mc.on('panstart', _onpanstart);
 
-    //on page change is called on init
     if (typeof opts.onSlideChange === 'function') {
 
       opts.onSlideChange(0);
