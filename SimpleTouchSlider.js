@@ -18,12 +18,14 @@ var SimpleTouchSlider = function($el, opts){
   var play_interval_obj;
   var is_animating = false;
 
+  var current_offset = 0;
+
   var mc; //hammer instance
 
   //set default opts
   opts = $.extend({
     animation_duration: 400,
-    auto_play: false,
+    auto_play: true,
     play_interval: 5000,
     onSlideChange: null,
     infinite: true
@@ -63,10 +65,9 @@ var SimpleTouchSlider = function($el, opts){
 
     mc = new Hammer($el[0]);
 
-    mc.on('pancancel panend', _onrelease);
-    mc.on('panleft panright', onpan);
     mc.on('swipeleft', _onswipeleft);
     mc.on('swiperight', _onswiperight);
+    mc.on('panstart', _onpanstart);
 
     //on page change is called on init
     if (typeof opts.onSlideChange === 'function') {
@@ -82,23 +83,43 @@ var SimpleTouchSlider = function($el, opts){
 
     }
 
-  }, 500);
+  }, 250);
 
   //on window resize, reposition things
-  $(window).on('resize.sldr', reposition);
+  var debounce_timeout;
+  $(window).on('resize.sldr', function(){
+    clearTimeout(debounce_timeout);
+    debounce_timeout = setTimeout(reposition, 250);
+  });
 
-
-  function onpan(ev) {
+  function _onpanstart() {
 
     stop();
+
+    mc.on('pancancel panend', _onrelease);
+    mc.on('panleft panright', _onpan);
+
+  }
+
+  function _stopListeningToPanEvents() {
+
+    mc.off('pancancel panend');
+    mc.off('panleft panright');
+
+  }
+
+
+  function _onpan(ev) {
 
     // stick to the finger
     var slide_offeset = -(100/slide_count) * current_slide;
     var drag_offset = ((100/slide_width) * ev.deltaX) / slide_count;
 
     // slow down at the first and last slide
-    if ((current_slide === 0 && ev.direction === "right") ||
-      (current_slide === slide_count-1 && ev.direction === "left")) {
+    if (
+      (current_slide === 0 && ev.direction === Hammer.DIRECTION_RIGHT && ev.deltaX > 0) ||
+      (current_slide === slide_count - 1 && ev.direction === Hammer.DIRECTION_LEFT) && ev.deltaX < 0)
+    {
 
       drag_offset *= .4;
 
@@ -108,24 +129,38 @@ var SimpleTouchSlider = function($el, opts){
 
   }
 
-  function _onrelease(ev) {
+  function _onrelease() {
 
-    // more then 50% moved, navigate
-    if (Math.abs(ev.deltaX) > slide_width / 2) {
+    _stopListeningToPanEvents();
 
-      if(ev.direction === 'right') {
+    //ignore if we're currently animating
+    if (is_animating) {
 
-        prev();
+      return;
 
-      } else {
+    }
 
-        next();
+    //figure out where we should go. if we're less than 50% offset from current slide in
+    //either direction, then just animate to current slide. otherwise, go prev or next.
 
-      }
+    var offset_current_slide = _getOffsetForSlide(current_slide);
+    var offset_prev_slide = current_slide > 0 ? _getOffsetForSlide(current_slide - 1) : null;
+    var offset_next_slide = current_slide < slide_count - 1 ? _getOffsetForSlide(current_slide + 1) : null;
+    var offset_slide_difference = offset_prev_slide !== null ? Math.abs(offset_prev_slide - offset_current_slide) :
+      Math.abs(offset_next_slide - offset_current_slide);
+    var offset_delta = offset_current_slide - current_offset;
+
+    if (offset_next_slide !== null && offset_delta / offset_slide_difference > 0.5) {
+
+      next();
+
+    } else if (offset_prev_slide !== null && offset_delta / offset_slide_difference < -0.5) {
+
+      prev();
 
     } else {
 
-      _showSlide(current_slide, true);
+      _animateToSlide(current_slide);
 
     }
 
@@ -134,6 +169,24 @@ var SimpleTouchSlider = function($el, opts){
   function _onswipeleft() {
 
     stop();
+
+    _stopListeningToPanEvents();
+
+    if (is_animating) {
+
+      return;
+
+    }
+
+    //don't allow infinite
+    if (current_slide === slide_count - 1) {
+
+      _animateToSlide(current_slide);
+
+      return;
+
+    }
+
     next();
 
   }
@@ -141,6 +194,24 @@ var SimpleTouchSlider = function($el, opts){
   function _onswiperight() {
 
     stop();
+
+    _stopListeningToPanEvents();
+
+    if (is_animating) {
+
+      return;
+
+    }
+
+    //don't allow infinite
+    if (current_slide === 0) {
+
+      _animateToSlide(current_slide);
+
+      return;
+
+    }
+
     prev();
 
   }
@@ -148,7 +219,7 @@ var SimpleTouchSlider = function($el, opts){
   /**
    * show slide by index
    */
-  function _showSlide(index, animate) {
+  function _animateToSlide(index) {
 
     _setDisplayForPerformance(index);
 
@@ -156,9 +227,9 @@ var SimpleTouchSlider = function($el, opts){
     index = Math.max(0, Math.min(index, slide_count-1));
     current_slide = index;
 
-    var offset = -((100/slide_count)*current_slide);
+    var offset = _getOffsetForSlide(current_slide);
 
-    _setContainerOffset(offset, animate);
+    _setContainerOffset(offset, true);
 
     if (opts.onSlideChange) {
 
@@ -168,15 +239,23 @@ var SimpleTouchSlider = function($el, opts){
 
   }
 
+  function _getOffsetForSlide(index) {
+
+    return -( ( 100 / slide_count) * index );
+
+  }
+
   /**
-   * @param percent
+   * @param offset
    * @param animate
    */
-  function _setContainerOffset(percent, animate) {
+  function _setContainerOffset(offset, animate) {
+
+    current_offset = offset;
 
     if (animate && is_animating) {
 
-      $container.css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+      $container.css("transform", "translate3d(" + offset + "%,0,0) scale3d(1,1,1)");
 
     } else if (animate) {
 
@@ -184,7 +263,7 @@ var SimpleTouchSlider = function($el, opts){
       is_animating = true;
       setTimeout(function(){
 
-        $container.css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+        $container.css("transform", "translate3d(" + offset + "%,0,0) scale3d(1,1,1)");
 
       }, 0);
 
@@ -192,7 +271,7 @@ var SimpleTouchSlider = function($el, opts){
 
       $container.removeClass("animate");
       is_animating = false;
-      $container.css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+      $container.css("transform", "translate3d(" + offset + "%,0,0) scale3d(1,1,1)");
 
     }
   }
@@ -223,7 +302,7 @@ var SimpleTouchSlider = function($el, opts){
 
     }
 
-    return _showSlide(current_slide + 1, true);
+    return _animateToSlide(current_slide + 1);
 
   }
 
@@ -237,7 +316,7 @@ var SimpleTouchSlider = function($el, opts){
 
     }
 
-    return _showSlide(current_slide - 1, true);
+    return _animateToSlide(current_slide - 1);
   }
 
   function play() {
@@ -251,7 +330,7 @@ var SimpleTouchSlider = function($el, opts){
 
       }
 
-      _showSlide(current_slide + 1, true);
+      _animateToSlide(current_slide + 1);
 
     }, opts.play_interval);
 
@@ -269,7 +348,7 @@ var SimpleTouchSlider = function($el, opts){
   function goToSlide(index) {
 
     stop();
-    _showSlide(index, true);
+    _animateToSlide(index);
 
   }
 
