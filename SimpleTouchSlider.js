@@ -285,9 +285,9 @@ var SimpleTouchSlider = function($el, opts){
     var $prev = $slides.eq(index - 1);
 
     $slides.css('display', 'none');
-    $prev.css('display', 'inline-block');
-    $current.css('display', 'inline-block');
-    $next.css('display', 'inline-block');
+    $prev.css('display', 'block');
+    $current.css('display', 'block');
+    $next.css('display', 'block');
 
   }
 
