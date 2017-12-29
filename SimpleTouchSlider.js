@@ -61,7 +61,7 @@ var SimpleTouchSlider = function($el, opts){
 
       _setDisplayForPerformance(current_slide);
 
-    }, 500);
+    }, 250);
 
     mc = new Hammer($el[0]);
 
@@ -82,7 +82,7 @@ var SimpleTouchSlider = function($el, opts){
 
     }
 
-  }, 250);
+  }, 50);
 
   //on window resize, reposition things
   var debounce_timeout;
